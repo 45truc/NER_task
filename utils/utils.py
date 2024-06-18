@@ -4,6 +4,7 @@ from skseq.sequences.sequence import *
 from skseq.sequences.sequence_list import *
 from os.path import dirname
 import numpy as np
+from sklearn.metrics import f1_score
 
 
 class NerCorpus(object):
@@ -90,3 +91,36 @@ class NerCorpus(object):
             ex_y.append(entity)
             
         return instances
+
+def Evaluate_metrics(sequences, sequences_predictions, corpus):
+    '''
+        Returns ACC. and F1 with the requested requieremetns.
+    '''
+    def f1(y_true, y_pred):
+        return f1_score(y_true, y_pred, average='weighted')
+
+    def evaluate_corpus(sequences, sequences_predictions, corpus):
+        '''
+            Evaluate classification accuracy at corpus level, comparing with
+            gold standard. Modified for ignoring class O.
+    
+        '''
+        total = 0.0
+        correct = 0.0
+        for i, sequence in enumerate(sequences):
+            pred = sequences_predictions[i]
+            for j, y_hat in enumerate(pred.y):
+                #Ignore class O mmm ns si está con número o con el nombre tengo qeu verlo
+                if sequence.y[j] == corpus.tag_dict['O']:
+                    continue
+                    
+                if sequence.y[j] == y_hat:
+                    correct += 1
+                total += 1
+        return correct / total
+
+    y_true = np.concatenate([np.array(sequences[s].y) for s in range(len(sequences))])
+    y_pred = np.concatenate([sequences_predictions[s].y for s in range(len(sequences_predictions))])
+
+    # Acc. ignoring 'O', weighted f1, 
+    return evaluate_corpus(sequences, sequences_predictions, corpus), f1(y_true, y_pred)
