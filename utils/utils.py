@@ -124,3 +124,91 @@ def Evaluate_metrics(sequences, sequences_predictions, corpus):
 
     # Acc. ignoring 'O', weighted f1, 
     return evaluate_corpus(sequences, sequences_predictions, corpus), f1(y_true, y_pred)
+
+
+
+###################### utils to analyze data #############################
+
+import pandas as pd
+from collections import Counter
+import matplotlib.pyplot as plt
+
+def analysis_tiny_dataset(df):
+    # Calculate the number of sentences
+    num_sentences = df['sentence_id'].nunique()
+
+    # Identify the unique entities and their counts
+    entity_tags = df[df['tags'] != 'O']['tags']
+    entity_counts = Counter(entity_tags)
+
+    # Identify the entities and their occurrences
+    entities = df[df['tags'] != 'O'][['words', 'tags']]
+    entity_list = entities.groupby('tags')['words'].apply(list).to_dict()
+
+    # Print the analysis
+    print(f'Number of sentences: {num_sentences}')
+    print('Entity counts:')
+    for entity, count in entity_counts.items():
+        print(f'  {entity}: {count}')
+    print('Entities and their occurrences:')
+    for tag, words in entity_list.items():
+        print(f'  {tag}: {words}')
+
+
+def analysis_train_test_data(train_df, test_df):
+
+    # Calculate the number of sentences
+    num_sentences_train = train_df['sentence_id'].nunique()
+    num_sentences_test = test_df['sentence_id'].nunique()
+    print(f'Number of sentences in train: {num_sentences_train}')
+    print(f'Number of sentences in test: {num_sentences_test}')
+
+    # Count the tags in train and test datasets, ignoring 'O' tags
+    train_entity_counts = Counter(train_df[train_df['tags'] != 'O']['tags'])
+    test_entity_counts = Counter(test_df[test_df['tags'] != 'O']['tags'])
+
+    # Sort entity counts in descending order for consistency in both datasets
+    sorted_train_counts = dict(sorted(train_entity_counts.items(), key=lambda item: item[1], reverse=True))
+    sorted_test_counts = {tag: test_entity_counts.get(tag, 0) for tag in sorted_train_counts.keys()}
+
+    print('Entity counts in train:')
+    for entity, count in sorted_train_counts.items():
+        print(f'  {entity}: {count}')
+
+    print('Entity counts in test:')
+    for entity, count in sorted_test_counts.items():
+        print(f'  {entity}: {count}')
+
+    # Prepare data for plotting
+    tags = list(sorted_train_counts.keys())
+    train_counts = [sorted_train_counts[tag] for tag in tags]
+    test_counts = [sorted_test_counts[tag] for tag in tags]
+
+    # Define colors for train and test bars
+    train_color = 'blue'
+    test_color = 'green'
+
+    # Width of the bars
+    bar_width = 0.4
+
+    # Positions of the bars on the x-axis
+    r1 = range(len(tags))
+    r2 = [x + bar_width for x in r1]
+
+    # Plotting the combined histogram
+    plt.figure(figsize=(14, 8))
+    plt.bar(r1, train_counts, color=train_color, width=bar_width, edgecolor='grey', label='Train Data')
+    plt.bar(r2, test_counts, color=test_color, width=bar_width, edgecolor='grey', label='Test Data')
+
+    # Add labels and title
+    plt.xlabel('Entity Tags', fontweight='bold')
+    plt.ylabel('Count', fontweight='bold')
+    plt.title('Entity Tag Counts in Train and Test Data', fontweight='bold')
+    plt.xticks([r + bar_width / 2 for r in range(len(tags))], tags, rotation=45)
+    plt.legend()
+
+    # Adjust layout and show the plot
+    plt.tight_layout()
+    plt.show()
+
+###################### utils to analyze data #############################
