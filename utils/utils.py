@@ -5,6 +5,7 @@ from skseq.sequences.sequence_list import *
 from os.path import dirname
 import numpy as np
 from sklearn.metrics import f1_score
+from sklearn.metrics import accuracy_score
 
 
 class NerCorpus(object):
@@ -124,6 +125,23 @@ def Evaluate_metrics(sequences, sequences_predictions, corpus):
 
     # Acc. ignoring 'O', weighted f1, 
     return evaluate_corpus(sequences, sequences_predictions, corpus), f1(y_true, y_pred)
+
+
+def Evaluate_metrics(sequences, sequences_predictions, corpus):
+    '''
+        Returns ACC. and F1 with the requested requieremetns.
+    '''
+    def f1(y_true, y_pred):
+        return f1_score(y_true, y_pred, average='weighted')
+
+    y_true = np.concatenate([np.array(sequences[s].y) for s in range(len(sequences))])
+    y_pred = np.concatenate([sequences_predictions[s].y for s in range(len(sequences_predictions))])
+    
+    mask = y_true!= corpus.tag_dict['O']
+    y_pred_f = y_pred[mask]
+    y_true_f = y_true[mask]
+    # Acc. ignoring 'O', weighted f1, 
+    return accuracy_score(y_true_f, y_pred_f), f1(y_true, y_pred)
 
 
 
