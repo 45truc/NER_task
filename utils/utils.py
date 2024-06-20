@@ -110,7 +110,7 @@ def Evaluate_metrics(sequences, sequences_predictions, corpus):
         for i, sequence in enumerate(sequences):
             pred = sequences_predictions[i]
             for j, y_hat in enumerate(pred.y):
-                #Ignore class O mmm ns si está con número o con el nombre tengo qeu verlo
+                #Ignore class O 
                 if sequence.y[j] == corpus.tag_dict['O']:
                     continue
                     
