@@ -6,6 +6,8 @@ from os.path import dirname
 import numpy as np
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
 
 
 class NerCorpus(object):
@@ -102,7 +104,7 @@ def decode_pred(pred, corpus):
         rep += '\n'
     return rep
 
-def Evaluate_metrics(sequences, sequences_predictions, corpus):
+def Evaluate_metrics(sequences, sequences_predictions, corpus, save=False, plotname=None):
     '''
         Returns ACC. and F1 with the requested requieremetns.
     '''
@@ -115,6 +117,33 @@ def Evaluate_metrics(sequences, sequences_predictions, corpus):
     mask = y_true!= corpus.tag_dict['O']
     y_pred_f = y_pred[mask]
     y_true_f = y_true[mask]
+
+    cm = confusion_matrix(y_true, y_pred)
+
+    # Plot the confusion matrix using Matplotlib
+    fig, ax = plt.subplots(figsize=(10, 7))
+    cax = ax.matshow(cm, cmap=plt.cm.Blues)
+    plt.title('Confusion Matrix', pad=20)
+    fig.colorbar(cax)
+    
+    # Set axes labels and tick marks
+    class_names  = np.array(list(corpus.tag_dict.keys()))[list(set(y_pred) | set(y_true))]
+    ax.set_xticklabels([''] + list(class_names), rotation=45)
+    ax.set_yticklabels([''] + list(class_names))
+    
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    
+    # Annotate each cell in the matrix with the numeric value
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            plt.text(j, i, format(cm[i, j], 'd'),
+                     ha="center", va="center",
+                     color="white" if cm[i, j] > cm.max() / 2 else "black")
+    if save:
+        plt.savefig(plotname)    
+    plt.show()
+    
     # Acc. ignoring 'O', weighted f1, 
     return accuracy_score(y_true_f, y_pred_f), f1(y_true, y_pred)
 
